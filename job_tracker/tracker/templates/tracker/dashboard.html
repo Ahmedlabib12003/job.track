@@ -1,0 +1,269 @@
+{% extends "tracker/base.html" %}
+
+{% block title %}Dashboard — Job Tracker{% endblock %}
+
+{% block extra_styles %}
+/* ── Stat strip ── */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  transition: border-color 0.15s;
+}
+.stat-card:hover { border-color: var(--muted); }
+.stat-card .stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+.stat-card .stat-value {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.9rem;
+  line-height: 1;
+  color: var(--text);
+}
+.stat-card.applied   .stat-value { color: var(--blue);  }
+.stat-card.interview .stat-value { color: var(--amber); }
+.stat-card.offer     .stat-value { color: var(--green); }
+.stat-card.rejected  .stat-value { color: var(--red);   }
+
+/* ── Table ── */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.table-toolbar .toolbar-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+.table-toolbar .toolbar-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+thead th {
+  padding: 0.7rem 1.25rem;
+  text-align: left;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.025); }
+
+td {
+  padding: 0.9rem 1.25rem;
+  font-size: 0.875rem;
+  vertical-align: middle;
+  color: var(--text);
+}
+td.company {
+  font-weight: 500;
+}
+td.job-title {
+  color: var(--text-dim);
+}
+td.date {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+td.url a {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: color 0.15s, border-color 0.15s;
+}
+td.url a:hover {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+td.notes-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+td.actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+.empty-state .empty-icon {
+  font-size: 2.5rem;
+  opacity: 0.2;
+  display: block;
+  margin-bottom: 1rem;
+}
+.empty-state p {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+/* ── Row fade-in ── */
+@keyframes rowIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+tbody tr {
+  animation: rowIn 0.25s ease both;
+}
+{% for i in "12345678901234567890" %}
+tbody tr:nth-child({{ forloop.counter }}) { animation-delay: {{ forloop.counter0 }}0ms; }
+{% endfor %}
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>Applications</h1>
+  </div>
+  <a href="{% url 'tracker:create' %}" class="btn btn-primary">+ Add New</a>
+</div>
+
+<!-- ── Stat strip ── -->
+<div class="stats-strip">
+  <div class="stat-card applied">
+    <span class="stat-label">Applied</span>
+    <span class="stat-value">{{ applications|length }}</span>
+  </div>
+  <div class="stat-card interview">
+    <span class="stat-label">Interviewing</span>
+    <span class="stat-value"><span id="count-interview">—</span></span>
+  </div>
+  <div class="stat-card offer">
+    <span class="stat-label">Offers</span>
+    <span class="stat-value"><span id="count-offer">—</span></span>
+  </div>
+  <div class="stat-card rejected">
+    <span class="stat-label">Rejected</span>
+    <span class="stat-value"><span id="count-rejected">—</span></span>
+  </div>
+</div>
+
+<!-- ── Table ── -->
+<div class="table-wrap">
+  <div class="table-toolbar">
+    <span class="toolbar-title">All Applications</span>
+    <span class="toolbar-count">{{ applications|length }} total</span>
+  </div>
+
+  {% if applications %}
+  <table>
+    <thead>
+      <tr>
+        <th>Company</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Date Applied</th>
+        <th>Link</th>
+        <th>Notes</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for app in applications %}
+      <tr data-status="{{ app.status }}">
+        <td class="company">{{ app.company_name }}</td>
+        <td class="job-title">{{ app.job_title }}</td>
+        <td><span class="badge badge-{{ app.status }}">{{ app.get_status_display }}</span></td>
+        <td class="date">{{ app.date_applied|date:"M d, Y" }}</td>
+        <td class="url">
+          {% if app.job_url %}
+            <a href="{{ app.job_url }}" target="_blank" rel="noopener">↗ link</a>
+          {% else %}
+            <span style="color:var(--muted)">—</span>
+          {% endif %}
+        </td>
+        <td class="notes-cell" title="{{ app.notes }}">
+          {% if app.notes %}{{ app.notes }}{% else %}<span style="color:var(--muted)">—</span>{% endif %}
+        </td>
+        <td class="actions">
+          <a href="{% url 'tracker:update' app.pk %}" class="btn btn-ghost">Edit</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% else %}
+  <div class="empty-state">
+    <span class="empty-icon">📋</span>
+    <p>No applications yet. Start tracking your job search.</p>
+    <a href="{% url 'tracker:create' %}" class="btn btn-primary">+ Add First Application</a>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  // Count statuses from rendered rows (avoids needing extra context vars)
+  const rows = document.querySelectorAll('tbody tr[data-status]');
+  const counts = { INTERVIEW: 0, OFFER: 0, REJECTED: 0 };
+  rows.forEach(r => {
+    const s = r.dataset.status;
+    if (counts[s] !== undefined) counts[s]++;
+  });
+  document.getElementById('count-interview').textContent = counts.INTERVIEW;
+  document.getElementById('count-offer').textContent     = counts.OFFER;
+  document.getElementById('count-rejected').textContent  = counts.REJECTED;
+
+  // Fix the "Applied" count card to show only APPLIED status
+  const appliedCard = document.querySelector('.stat-card.applied .stat-value');
+  if (appliedCard) {
+    const appliedCount = [...rows].filter(r => r.dataset.status === 'APPLIED').length;
+    appliedCard.textContent = appliedCount;
+  }
+</script>
+
+{% endblock %}

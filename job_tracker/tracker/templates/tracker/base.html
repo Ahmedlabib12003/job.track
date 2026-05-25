@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Job Tracker{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f11;
+      --surface:   #17171a;
+      --border:    #2a2a30;
+      --muted:     #52525e;
+      --text:      #e8e8ec;
+      --text-dim:  #9898a6;
+      --amber:     #f59e0b;
+      --amber-dim: #78490a;
+      --green:     #34d399;
+      --green-dim: #064e3b;
+      --blue:      #60a5fa;
+      --blue-dim:  #1e3a5f;
+      --red:       #f87171;
+      --red-dim:   #4c1d1d;
+      --radius:    6px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Nav ── */
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      background: rgba(15,15,17,0.85);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    .nav-brand {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.25rem;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: 0.01em;
+    }
+    .nav-brand span {
+      color: var(--amber);
+    }
+    .nav-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 1rem;
+      border-radius: var(--radius);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      letter-spacing: 0.03em;
+    }
+    .btn-primary {
+      background: var(--amber);
+      color: #0f0f11;
+      border-color: var(--amber);
+    }
+    .btn-primary:hover {
+      background: #fbbf24;
+      border-color: #fbbf24;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-dim);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--muted);
+      background: var(--surface);
+    }
+
+    /* ── Main wrapper ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+    }
+
+    /* ── Page header ── */
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-header h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 2rem;
+      font-weight: 400;
+      line-height: 1.2;
+      color: var(--text);
+    }
+    .page-header p {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-top: 0.3rem;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── Status badges ── */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .badge-APPLIED   { background: var(--blue-dim);  color: var(--blue);  border: 1px solid #2a4a7f; }
+    .badge-INTERVIEW { background: var(--amber-dim); color: var(--amber); border: 1px solid #92400e; }
+    .badge-OFFER     { background: var(--green-dim); color: var(--green); border: 1px solid #065f46; }
+    .badge-REJECTED  { background: var(--red-dim);   color: var(--red);   border: 1px solid #7f1d1d; }
+
+    /* ── Flash messages ── */
+    .messages {
+      list-style: none;
+      margin-bottom: 1.5rem;
+    }
+    .messages li {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      font-family: 'DM Mono', monospace;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+    }
+    .messages li.success { border-color: #065f46; color: var(--green); background: var(--green-dim); }
+    .messages li.error   { border-color: #7f1d1d; color: var(--red);   background: var(--red-dim);   }
+
+    {% block extra_styles %}{% endblock %}
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="{% url 'tracker:dashboard' %}" class="nav-brand">job<span>.</span>track</a>
+    <div class="nav-actions">
+      <a href="{% url 'tracker:create' %}" class="btn btn-primary">+ New Application</a>
+    </div>
+  </nav>
+
+  <main>
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+</body>
+</html>
